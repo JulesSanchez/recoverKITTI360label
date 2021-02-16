@@ -11,6 +11,11 @@ As the aim of this work was to recover the label of the indivdual frame inside K
 
 In pratice, I changed some hyperparameters forme the one in the original code, most notably line 313, I set -1 as the blind_spot_angle.
 
+# Usage 
+
+main.py can be used to create accumulated pointclouds, following the original goal of accumuLaser
+recoverLabels.py can be used to generate label files for each individual frame. It is based on a nearest enighbor search on the current previous and next accumulated pointclouds that correspond to this frame numer.
+
 # KITTI360
 
 Details and download are available at: www.cvlibs.net/datasets/kitti-360
