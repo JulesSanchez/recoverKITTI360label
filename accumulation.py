@@ -416,7 +416,7 @@ class PointAccumulation:
 
     def recoverLabel(self,superPointCloud,superPointCloudPrev,superPointCloudnext,rangeS=0.1):
 
-        self.labels = np.ones(len(self.Ts))*-1
+        self.labels = np.zeros(len(self.Ts))
 
         if not superPointCloudPrev is None :
             superpcPath = self.superpcDir + superPointCloudPrev
