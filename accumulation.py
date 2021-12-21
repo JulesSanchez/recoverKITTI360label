@@ -28,7 +28,8 @@ class PointAccumulation:
         self.baseDir = self.rootDir + "/data_3d_raw/" + self.sequenceName
         self.poseDir = self.rootDir + "/data_poses/" + self.sequenceName
         self.calibDir = self.rootDir + "/calibration"
-        self.superpcDir = self.rootDir + "/data_3d_semantics/" + self.sequenceName + "/static/"
+        self.superpcDir_static = self.rootDir + "/data_3d_semantics/" + self.sequenceName + "/static/"
+        self.superpcDir_dynamic = self.rootDir + "/data_3d_semantics/" + self.sequenceName + "/dynamic/"
 
         self.Tr_cam_pose = [] #cam0x -> pose
         self.Tr_cam_velo = np.empty((4,4)) #cam00 -> velo
@@ -413,39 +414,85 @@ class PointAccumulation:
                 print("write labels to folder %s ...\n" % label_folder)
             writeLabelsToFolder(label_folder, self.labels, self.Ts, self.globalIdx, self.numPts)
 
-
-    def recoverLabel(self,superPointCloud,superPointCloudPrev,superPointCloudnext,rangeS=0.1):
+    
+    def recoverLabel(self,superPointCloud,superPointCloudPrev,superPointCloudNext,rangeS=0.1):
 
         self.labels = np.zeros(len(self.Ts))
-
+        
         if not superPointCloudPrev is None :
-            superpcPath = self.superpcDir + superPointCloudPrev
-            superpcd = open3d.io.read_point_cloud(superpcPath)
-            n_pts = np.asarray(superpcd.points).shape[0]
-            superpcd = readBinaryPly(superpcPath,n_pts)
 
-            tree = KDTree(superpcd[:,:3])
+            superpcPath_static = self.superpcDir_static + superPointCloudPrev
+            superpcd_static = open3d.io.read_point_cloud(superpcPath_static)
+            n_pts_static = np.asarray(superpcd_static.points).shape[0]
+
+            superpcPath_dynamic = self.superpcDir_dynamic + superPointCloudPrev
+            superpcd_dynamic = open3d.io.read_point_cloud(superpcPath_dynamic)
+            n_pts_dynamic = np.asarray(superpcd_dynamic.points).shape[0]
+        
+       
+            superpcd_static = readBinaryPly(superpcPath_static,n_pts_static, True)
+            superpcd_static_selec = superpcd_static[:,[0,1,2,6]]
+            if n_pts_dynamic != 0:
+                superpcd_dynamic = readBinaryPly(superpcPath_dynamic,n_pts_dynamic,False)
+                superpcd_dynamic_selec = superpcd_dynamic[:,[0,1,2,6]]
+
+                superpcd_combined = np.concatenate((superpcd_static_selec, superpcd_dynamic_selec))
+            else: 
+                print("{}{}". format("The following file does not have any points and will be skipped",superpcPath_dynamic))
+                superpcd_combined = superpcd_static_selec
+
+            tree = KDTree(superpcd_combined[:,:3]) 
+            dist, ind = tree.query(self.Md) 
+            mask = dist[:,0]<rangeS 
+            self.labels[mask] = superpcd_combined[ind[:,0][mask],3]
+
+        if not superPointCloudNext is None : 
+            superpcPath_static = self.superpcDir_static + superPointCloudNext 
+            superpcd_static = open3d.io.read_point_cloud(superpcPath_static)
+            n_pts_static = np.asarray(superpcd_static.points).shape[0]
+
+            superpcPath_dynamic = self.superpcDir_dynamic + superPointCloudNext
+            superpcd_dynamic = open3d.io.read_point_cloud(superpcPath_dynamic)
+            n_pts_dynamic = np.asarray(superpcd_dynamic.points).shape[0]
+        
+       
+            superpcd_static = readBinaryPly(superpcPath_static,n_pts_static, True)
+            superpcd_static_selec = superpcd_static[:,[0,1,2,6]]
+            if n_pts_dynamic != 0:
+                superpcd_dynamic = readBinaryPly(superpcPath_dynamic,n_pts_dynamic,False)
+                superpcd_dynamic_selec = superpcd_dynamic[:,[0,1,2,6]]
+
+                superpcd_combined = np.concatenate((superpcd_static_selec, superpcd_dynamic_selec))
+            else: 
+                print("{}{}". format("The following file does not have any points and will be skipped",superpcPath_dynamic))
+                superpcd_combined = superpcd_static_selec
+
+            tree = KDTree(superpcd_combined[:,:3]) 
             dist, ind = tree.query(self.Md)
             mask = dist[:,0]<rangeS
-            self.labels[mask] = superpcd[ind[:,0][mask],6]
+            self.labels[mask] = superpcd_combined[ind[:,0][mask],3]
 
-        if not superPointCloudnext is None :
-            superpcPath = self.superpcDir + superPointCloudnext
-            superpcd = open3d.io.read_point_cloud(superpcPath)
-            n_pts = np.asarray(superpcd.points).shape[0]
-            superpcd = readBinaryPly(superpcPath,n_pts)
+        superpcPath_static = self.superpcDir_static + superPointCloud
+        superpcd_static = open3d.io.read_point_cloud(superpcPath_static)
+        n_pts_static = np.asarray(superpcd_static.points).shape[0]
 
-            tree = KDTree(superpcd[:,:3])
-            dist, ind = tree.query(self.Md)
-            mask = dist[:,0]<rangeS
-            self.labels[mask] = superpcd[ind[:,0][mask],6]
+        superpcPath_dynamic = self.superpcDir_dynamic + superPointCloud
+        superpcd_dynamic = open3d.io.read_point_cloud(superpcPath_dynamic)
+        n_pts_dynamic = np.asarray(superpcd_dynamic.points).shape[0]
+        
+        superpcd_static = readBinaryPly(superpcPath_static,n_pts_static, True)
+        superpcd_static_selec = superpcd_static[:,[0,1,2,6]]
+        if n_pts_dynamic != 0:
+            superpcd_dynamic = readBinaryPly(superpcPath_dynamic,n_pts_dynamic,False)
+            superpcd_dynamic_selec = superpcd_dynamic[:,[0,1,2,6]]
 
-        superpcPath = self.superpcDir + superPointCloud
-        superpcd = open3d.io.read_point_cloud(superpcPath)
-        n_pts = np.asarray(superpcd.points).shape[0]
-        superpcd = readBinaryPly(superpcPath,n_pts)
+            superpcd_combined = np.concatenate((superpcd_static_selec, superpcd_dynamic_selec))
+        else: 
+            print("{}{}". format("The following file does not have any points and will be skipped",superpcPath_dynamic))
+            superpcd_combined = superpcd_static_selec
 
-        tree = KDTree(superpcd[:,:3])
+        tree = KDTree(superpcd_combined[:,:3])
         dist, ind = tree.query(self.Md)
         mask = dist[:,0]<rangeS
-        self.labels[mask] = superpcd[ind[:,0][mask],6]
+        self.labels[mask] = superpcd_combined[ind[:,0][mask],3]
+ 
