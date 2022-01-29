@@ -14,7 +14,10 @@ In pratice, I changed some hyperparameters forme the one in the original code, m
 # Usage 
 
 main.py can be used to create accumulated pointclouds, following the original goal of accumuLaser
-recoverLabels.py can be used to generate label files for each individual frame. It is based on a nearest enighbor search on the current previous and next accumulated pointclouds that correspond to this frame numer.
+recoverLabels.py can be used to generate label files for each individual frame. It is based on a nearest neighbor search on the current previous and next accumulated static and dynamic pointclouds that correspond to this frame numer.
+
+![visualization_seq3](https://user-images.githubusercontent.com/94064424/146905067-fd462f84-40ac-4c54-91a1-aa543d324dc2.gif)
+An example where the raw points were visualized with the recovered labels using a 2D spherical projection.
 
 # KITTI360
 

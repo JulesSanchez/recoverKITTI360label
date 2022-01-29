@@ -9,6 +9,7 @@ args = parser.parse_args()
 root_dir = args.kitti_dir
 output_dir = args.output_dir
 
+
 for sequence in os.listdir(os.path.join(root_dir,"data_3d_raw")):
     all_spcds = os.listdir(os.path.join(os.path.join(os.path.join(root_dir,"data_3d_semantics"),sequence),"static"))
     all_spcds.sort()

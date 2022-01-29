@@ -253,8 +253,14 @@ def mkdir(dir):
     except:
         return False
 
-def readBinaryPly(pcdFile, n_pts):
+def readBinaryPly(pcdFile, n_pts, static=True):
 
+    if static:
+        fmt = '=fffBBBiiBf'
+    else:
+        fmt = '=fffBBBiiBif'
+    fmt_len = struct.calcsize(fmt)
+    
     with open(pcdFile, 'rb') as f:
         plyData = f.readlines()
 
@@ -262,13 +268,13 @@ def readBinaryPly(pcdFile, n_pts):
     plyData = plyData[headLine:]
     plyData = b"".join(plyData)
 
-    n_pts_loaded = len(plyData)/24
+    n_pts_loaded = len(plyData)/fmt_len
     assert(n_pts_loaded==n_pts)
     n_pts_loaded = int(n_pts_loaded)
 
     data = []
     for i in range(n_pts_loaded):
-        pts=struct.unpack('=fffBBBiiB', plyData[i*24:(i+1)*24])
+        pts=struct.unpack(fmt , plyData[i*fmt_len:(i+1)*fmt_len])
         data.append(pts)
     data=np.asarray(data)
     return data
